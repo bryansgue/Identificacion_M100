@@ -4,9 +4,9 @@
 clc, clear all, close all;
 
 %% LOAD VALUES FROM MATRICES
-load('Test4.mat')
+load('Test2.mat')
 clear tf;
-desface = 600;
+desface = 0;
 t = t(1,1:end-desface);
 N = length(t);
 

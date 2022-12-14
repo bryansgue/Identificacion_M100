@@ -2,7 +2,7 @@
 tic
 clc; clear all; close all; warning off % Inicializacion
 ts = 1/30;       
-tfin = 60;     
+tfin = 45;     
 t = 0:ts:tfin;
 
 %% Inicializa Nodo ROS
@@ -46,7 +46,7 @@ break
 end 
 
 w_ref_active = true;
-n=1; % Seleccion UAV
+n=2; % Seleccion UAV
 
 %% VELOCIDADES PARA EL UAV
 switch n    
@@ -394,5 +394,5 @@ plot(w)
 %% SAVE DATA
 % save("Test1.mat");
 
-filename = 'Test3.mat';
+filename = 'Test5.mat';
 save(filename)
