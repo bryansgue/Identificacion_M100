@@ -1,0 +1,110 @@
+% Code to analyze the error vector of the system
+
+clc, clear all;
+
+load("Vision_sim_MPC.mat");
+
+%% Load values designed fir the figure
+% %% Parameters fancy plots
+% define plot properties
+lw = 2; % linewidth 1
+lwV = 2; % linewidth 2
+fontsizeLabel = 9; %11
+fontsizeLegend = 12;
+fontsizeTicks = 9;
+fontsizeTitel = 9;
+sizeX = 900; % size figure
+sizeY = 300; % size figure
+
+% color propreties
+C1 = [246 170 141]/255;
+C2 = [51 187 238]/255;
+C3 = [0 153 136]/255;
+C4 = [238 119 51]/255;
+C5 = [204 51 17]/255;
+C6 = [238 51 119]/255;
+C7 = [187 187 187]/255;
+C8 = [80 80 80]/255;
+C9 = [140 140 140]/255;
+C10 = [0 128 255]/255;
+C11 = [234 52 89]/255;
+C12 = [39 124 252]/255;
+C13 = [40 122 125]/255;
+%C14 = [86 215 219]/255;
+C14 = [252 94 158]/255;
+C15 = [244 171 39]/255;
+C16 = [100 121 162]/255;
+C17 = [255 0 0]/255;
+
+figure('Position', [15 15 sizeX sizeY])
+set(gcf, 'PaperUnits', 'inches');
+set(gcf, 'PaperSize', [8.5 11]);
+set(gcf, 'PaperPositionMode', 'manual');
+
+subplot(4,1,1)
+
+plot(errores(3,:),'-','Color',C13,'LineWidth',lw*1);hold on
+
+
+grid minor;
+grid minor;
+set(gca,'ticklabelinterpreter','latex',...
+        'fontsize',fontsizeTicks)
+xlabel('$\textrm{Time}[s]$','interpreter','latex','fontsize',fontsizeLabel)
+ylabel('$[Errors]$','interpreter','latex','fontsize',fontsizeLabel)
+title({'(a)'},'fontsize',fontsizeTitel,'interpreter','latex')
+% set(gca,'Xticklabel',[])
+legend({'$r$'},'interpreter','latex','fontsize',fontsizeLegend)
+grid minor;
+
+
+subplot(4,1,2)
+
+plot(errores(4,:),'-','Color',C7,'LineWidth',lw*1);hold on
+
+
+grid minor;
+grid minor;
+set(gca,'ticklabelinterpreter','latex',...
+        'fontsize',fontsizeTicks)
+xlabel('$\textrm{Time}[s]$','interpreter','latex','fontsize',fontsizeLabel)
+ylabel('$[Errors]$','interpreter','latex','fontsize',fontsizeLabel)
+title({'(b)'},'fontsize',fontsizeTitel,'interpreter','latex')
+% set(gca,'Xticklabel',[])
+legend({'$\theta$'},'interpreter','latex','fontsize',fontsizeLegend)
+grid minor;
+
+subplot(4,1,3)
+
+plot(v(1,:),'-','Color',C13,'LineWidth',lw*1);hold on
+
+
+grid minor;
+grid minor;
+set(gca,'ticklabelinterpreter','latex',...
+        'fontsize',fontsizeTicks)
+xlabel('$\textrm{Time}[s]$','interpreter','latex','fontsize',fontsizeLabel)
+ylabel('$[Errors]$','interpreter','latex','fontsize',fontsizeLabel)
+title({'(c)'},'fontsize',fontsizeTitel,'interpreter','latex')
+% set(gca,'Xticklabel',[])
+legend({'$norm$'},'interpreter','latex','fontsize',fontsizeLegend)
+grid minor;
+
+subplot(4,1,4)
+
+plot(v_max(1,:),'-','Color',C12,'LineWidth',lw*1);hold on
+plot(v_k(1,:),'-','Color',C13,'LineWidth',lw*1);hold on
+plot(v_filter(1,:),'--','Color',C10,'LineWidth',lw*1);hold on
+
+
+
+grid minor;
+grid minor;
+set(gca,'ticklabelinterpreter','latex',...
+        'fontsize',fontsizeTicks)
+xlabel('$\textrm{Time}[s]$','interpreter','latex','fontsize',fontsizeLabel)
+ylabel('$[Errors]$','interpreter','latex','fontsize',fontsizeLabel)
+title({'(d)'},'fontsize',fontsizeTitel,'interpreter','latex')
+% set(gca,'Xticklabel',[])
+legend({'$v_m$','$v_k$'},'interpreter','latex','fontsize',fontsizeLegend)
+grid minor;

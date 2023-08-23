@@ -1,0 +1,22 @@
+clc;clear;close all
+
+tam = 4400;
+
+rosbag_interpol= rosbag('/home/bryansgue/rosbag/2023-05-03-17-54-44.bag');
+
+odom_msg_interpol = select(rosbag_interpol,"Topic","/dji_sdk/odometry2"); 
+odom_interpol_struc = readMessages(odom_msg_interpol,"DataFormat","struct");
+odom_interpol = zeros(1,size(odom_interpol_struc,3));
+
+% time_msg_interpol = select(rosbag_interpol,"Topic","/time_average"); 
+% time_interpol_struc = readMessages(time_msg_interpol,"DataFormat","struct");
+% time_interpol = zeros(1,tam);
+% 
+
+
+for i = 1:tsize(odom_normal_struc,1)
+    odom_interpol(i,1) = odom_interpol_struc{i}.Pose.Pose.Position.X;
+    odom_interpol(i,2) = odom_interpol_struc{i}.Pose.Pose.Position.Y;
+    odom_interpol(i,3) = odom_interpol_struc{i}.Pose.Pose.Position.Z;
+    time_interpol(i) = time_interpol_struc{i, 1}.Data  ;
+end

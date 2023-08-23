@@ -1,0 +1,337 @@
+%% IDENTIFICATION OF PARAMETERS DORNE DYNAMIC %%
+
+%% clear variables
+clc, clear all, close all;
+
+% LOAD VALUES FROM MATRICES
+
+n=11;
+text1 = 'M100_ident_euler';
+n_chr = int2str(n);
+test2 = '.mat';
+File = strcat(text1,n_chr,test2)
+load(File)
+% Settings
+clear tf;
+desface = 0;
+t = t(1,1:end-desface);
+N = length(t);
+
+%Igualacion de datos:
+omega = omega(:,1:end-1);
+v = v(:,1:end-1);
+% REFERENCE SIGNALS
+ul_ref = v(1,1:end-desface);
+um_ref = v(2,1:end-desface);
+un_ref = v(3,1:end-desface);
+p_ref = omega(1,1:end-desface);
+q_ref = omega(2,1:end-desface);
+r_ref = omega(3,1:end-desface);
+
+nu_ref = [ul_ref;um_ref;un_ref; p_ref; q_ref; r_ref];
+
+
+% Filter Real Signals States
+landa = 2;
+Fo=tf(landa,[1 landa]);
+
+ul(1,:) = lsim(Fo,nu_ref(1,:),t);
+um(1,:) = lsim(Fo,nu_ref(2,:),t);
+un(1,:) = lsim(Fo,nu_ref(3,:),t);
+p(1,:) = lsim(Fo,nu_ref(4,:),t);
+q(1,:) = lsim(Fo,nu_ref(5,:),t);
+r(1,:) = lsim(Fo,nu_ref(6,:),t);
+
+nu = [ul;um;un; p; q; r];
+
+figure_title = 'Inputs vs Real';
+legend_vec1 = {'\mu_{l_ref}', '\mu_{m_ref}', '\mu_{n_ref}', 'p_{ref}', 'q_{ref}', 'r_{ref}'}; % Define las leyendas del primer vector
+legend_vec2 = {'\mu_{l}', '\mu_{m}', '\mu_{n}', 'p', 'q', 'r'}; % Define las leyendas del segundo vector
+plot_six_subplots(nu_ref, nu, figure_title, legend_vec1, legend_vec2);
+
+
+% REAL SYSTEM states
+ul_p = [0 , diff(ul)/ts];
+um_p = [0 , diff(um)/ts];
+un_p = [0 , diff(un)/ts];
+
+p_p = [0 , diff(p)/ts];
+q_p = [0 , diff(q)/ts];
+r_p = [0 , diff(r)/ts];
+
+nu_p = [ul_p;um_p;un_p; p_p; q_p; r_p];
+
+%
+% Filter signals
+landa = 20;
+F1=tf(landa,[1 landa]);
+
+% REFERENCE SIGNALS
+% REFERENCE SIGNALS
+
+nu_ref_f(1,:) = lsim(F1,nu_ref(1,:),t);
+nu_ref_f(2,:) = lsim(F1,nu_ref(2,:),t);
+nu_ref_f(3,:) = lsim(F1,nu_ref(3,:),t);
+nu_ref_f(4,:) = lsim(F1,nu_ref(4,:),t);
+nu_ref_f(5,:) = lsim(F1,nu_ref(5,:),t);
+nu_ref_f(6,:) = lsim(F1,nu_ref(6,:),t);
+
+vec1 = nu_ref_f;
+vec2 = nu_ref;
+figure_title = 'Senales Filtradas';
+legend_vec1 = {'\mu_{lref_f}', '\mu_{mref_f}', '\mu_{nref_f}', 'p_{ref_f}', 'q_{ref_f}', 'r_{ref_f}'}; % Define las leyendas del primer vector
+legend_vec2 = {'\mu_{lref}', '\mu_{mref}', '\mu_{nref}', 'p_{ref}', 'q_{ref}', 'r_{ref}'}; % Define las leyendas del segundo vector
+plot_six_subplots(vec1, vec2, figure_title, legend_vec1, legend_vec2);
+
+% REAL SYSTEM Filter
+nu_f(1,:) = lsim(F1,nu(1,:),t);
+nu_f(2,:) = lsim(F1,nu(2,:),t);
+nu_f(3,:) = lsim(F1,nu(3,:),t);
+nu_f(4,:) = lsim(F1,nu(4,:),t);
+nu_f(5,:) = lsim(F1,nu(5,:),t);
+nu_f(6,:) = lsim(F1,nu(6,:),t);
+
+vec3 = nu_f;
+vec4 = nu;
+figure_title = 'Senales reales Filtradas';
+legend_vec1 = {'\mu_{l_f}', '\mu_{m_f}', '\mu_{n_f}', 'p_{f}', 'q_{f}', 'r_{f}'}; % Define las leyendas del primer vector
+legend_vec2 = {'\mu_{l}', '\mu_{m}', '\mu_{n}', 'p', 'q', 'r'}; % Define las leyendas del segundo vector
+plot_six_subplots(vec3, vec4, figure_title, legend_vec1, legend_vec2);
+
+nu_p_f(1,:) = lsim(F1,nu_p(1,:),t);
+nu_p_f(2,:) = lsim(F1,nu_p(2,:),t);
+nu_p_f(3,:) = lsim(F1,nu_p(3,:),t);
+nu_p_f(4,:) = lsim(F1,nu_p(4,:),t);
+nu_p_f(5,:) = lsim(F1,nu_p(5,:),t);
+nu_p_f(6,:) = lsim(F1,nu_p(6,:),t);
+
+vec5 = nu_p_f;
+vec6 = nu_p;
+figure_title = 'Aceleraciones reales Filtradas';
+legend_vec1 = {'\mu_{lp_f}', '\mu_{mp_f}', '\mu_{np_f}', 'p_{p_f}', 'q_{p_f}', 'r_{p_f}'}; % Define las leyendas del primer vector
+legend_vec2 = {'\mu_{lp}', '\mu_{mp}', '\mu_{np}', 'p_p', 'q_p', 'r_p'}; % Define las leyendas del segundo vector
+plot_six_subplots(vec5, vec6, figure_title, legend_vec1, legend_vec2);
+
+
+%% OPTIMIZATION PARAMETERS IDENTIFICATION
+options = optimoptions(@fmincon,'Algorithm','interior-point');
+options.MaxFunctionEvaluations = 60000;
+rng default;
+ms = MultiStart('FunctionTolerance',2e-4,'UseParallel',true,'Display','iter','MaxTime',300);
+gs = GlobalSearch(ms);
+
+% INITIAL VALUES
+% values= load("Xini.mat");
+chi = ones(22,1);
+f_obj1 = @(x)funcion_costo_fullUAV_Newton(x,nu_ref_f,nu_f,nu_p_f,N);
+% problem = fmincon(f_obj1,chi,[],[],[],[],[],[],[],options);
+problem = createOptimProblem('fmincon','objective',...
+    f_obj1,'x0',chi,'lb',[zeros(20,1)],'ub',[],'options',options);
+[x, f] = run(gs, problem);
+values_final = x;
+
+
+
+%%
+% %save("/home/bryansgue/Doctorado/Matlab/UAV/DynamicControllers/chi_values.mat","chi");
+%
+% %save("/home/bryan/Proyectos_Matlab/Doctorado/Matlab/IdentificacionM100/IdentificacionUAV/chi_values.mat","chi");
+% save("chi_values_fullUAV.mat","chi");
+%load("parameters.mat");
+
+
+%% ACCIONES DE CONTROL TEST
+% F_ref =     0.0*ones(1, length(t));
+% phi_ref =   0*ones(1, length(t));
+% theta_ref = 0*ones(1, length(t));
+% psi_ref =   0*ones(1, length(t));
+% u_ref = [0*F_ref;0*F_ref;F_ref; phi_ref; theta_ref; psi_ref];
+
+nu_estimate = nu(:,1);
+for k=1:length(t)
+    nu_estimate(:, k+1) = f_dynamic_Newton(x, nu_ref_f(:,k), nu_estimate(:,k), ts);
+end
+
+figure (1)
+set(gcf, 'PaperUnits', 'inches');
+set(gcf, 'PaperSize', [4 2]);
+set(gcf, 'PaperPositionMode', 'manual');
+set(gcf, 'PaperPosition', [0 0 8 3]);
+luz = light;
+luz.Color=[0.65,0.65,0.65];
+luz.Style = 'infinite';
+
+%b) Dimenciones del Robot
+Drone_Parameters(0.02);
+%c) Dibujo del Robot
+G2=Drone_Plot_3D(nu_estimate(1,1),nu_estimate(2,1),nu_estimate(3,1),nu_estimate(4,1), nu_estimate(5,1), nu_estimate(6,1));hold on
+
+%plot3(H(1,1),H(2,1),H(3,11),'--','Color',[56,171,217]/255,'linewidth',1.5);hold on,grid on
+
+close all
+
+axis equal
+for k = 1:100:length(t)-1
+    drawnow
+    delete(G2);
+    
+    G2=Drone_Plot_3D(nu_estimate(1,k),nu_estimate(2,k),nu_estimate(3,k),nu_estimate(4,k), nu_estimate(5,k), nu_estimate(6,k));hold on
+    
+    plot3(nu_estimate(1,1:k),nu_estimate(2,1:k),nu_estimate(3,1:k),'--','Color',[56,171,217]/255,'linewidth',1.5);
+    %plot3(obs(1,:),obs(2,:),obs(3,:),'x','Color',[0,171,217]/255,'linewidth',2);
+    legend({'$\mathbf{h}$','$\mathbf{h}_{des}$'},'Interpreter','latex','FontSize',11,'Location','northwest','Orientation','horizontal');
+    legend('boxoff')
+    title('$\textrm{Movement Executed by the Aerial Robot}$','Interpreter','latex','FontSize',11);
+    xlabel('$\textrm{X}[m]$','Interpreter','latex','FontSize',9); ylabel('$\textrm{Y}[m]$','Interpreter','latex','FontSize',9);zlabel('$\textrm{Z}[m]$','Interpreter','latex','FontSize',9);
+    
+end
+
+
+
+
+
+%
+% Parameters fancy plots
+% define plot properties
+lw = 2; % linewidth 1
+lwV = 2; % linewidth 2
+fontsizeLabel = 9; %11
+fontsizeLegend = 9;
+fontsizeTicks = 9;
+fontsizeTitel = 9;
+sizeX = 900; % size figure
+sizeY = 300; % size figure
+
+% color propreties
+C1 = [246 170 141]/255;
+C2 = [51 187 238]/255;
+C3 = [0 153 136]/255;
+C4 = [238 119 51]/255;
+C5 = [204 51 17]/255;
+C6 = [238 51 119]/255;
+C7 = [187 187 187]/255;
+C8 = [80 80 80]/255;
+C9 = [140 140 140]/255;
+C10 = [0 128 255]/255;
+C11 = [234 52 89]/255;
+C12 = [39 124 252]/255;
+C13 = [40 122 125]/255;
+%C14 = [86 215 219]/255;
+C14 = [252 94 158]/255;
+C15 = [244 171 39]/255;
+C16 = [100 121 162]/255;
+C17 = [255 0 0]/255;
+%
+%
+%%
+%
+figure (2)
+figure('Position', [10 10 sizeX sizeY])
+set(gcf, 'PaperUnits', 'inches');
+set(gcf, 'PaperSize', [8.5 11]);
+set(gcf, 'PaperPositionMode', 'manual');
+%%
+close all
+subplot(2,2,1)
+%plot(t(1:length(F_ref)),F_ref,'-.','Color',C9,'LineWidth',lw*1.2); hold on
+plot(t,nu_ref(1,1:length(t)),'.-','Color',C9,'LineWidth',lw); hold on;
+plot(t,nu(1,1:length(t)),'-','Color',C11,'LineWidth',lw); hold on;
+plot(t,nu_estimate(1,1:length(t)),'--','Color',C12,'LineWidth',lw);
+grid minor;
+grid minor;
+set(gca,'ticklabelinterpreter','latex',...
+    'fontsize',fontsizeTicks)
+%xlabel('$\textrm{Time}[s]$','interpreter','latex','fontsize',fontsizeLabel)
+ylabel('$[m/s]$','interpreter','latex','fontsize',fontsizeLabel)
+title({'(a)'},'fontsize',fontsizeTitel,'interpreter','latex')
+% set(gca,'Xticklabel',[])
+legend({'$\mu_{lreal}$','$\mu_{lmodel}$'},'interpreter','latex','fontsize',fontsizeLegend)
+%plot(t,ul,'-','Color',C2,'LineWidth',lw);
+grid minor;
+
+%
+subplot(2,2,2)
+%plot(t(1:length(phi_ref)),phi_ref,'-.','Color',C9,'LineWidth',lw*1.2); hold on
+plot(t,nu(2,1:length(t)),'-','Color',C13,'LineWidth',lw); hold on;
+%plot(t,ul,'-','Color',C2,'LineWidth',lw);
+plot(t,nu_estimate(2,1:length(t)),'--','Color',C14,'LineWidth',lw);
+grid minor;
+
+set(gca,'ticklabelinterpreter','latex',...
+    'fontsize',fontsizeTicks)
+%xlabel('$\textrm{Time}[s]$','interpreter','latex','fontsize',fontsizeLabel)
+ylabel('$[m/s]$','interpreter','latex','fontsize',fontsizeLabel)
+title({'(b)'},'fontsize',fontsizeTitel,'interpreter','latex')
+% set(gca,'Xticklabel',[])
+legend({'$\mu_{mreal}$','$\mu_{mmodel}$'},'interpreter','latex','fontsize',fontsizeLegend)
+
+subplot(2,2,3)
+%plot(t(1:length(theta_ref)),theta_ref,'-.','Color',C9,'LineWidth',lw*1.2); hold on
+plot(t,nu(3,1:length(t)),'-','Color',C2,'LineWidth',lw); hold on;
+plot(t,nu_estimate(3,1:length(t)),'--','Color',C15,'LineWidth',lw);
+%plot(t,ul,'-','Color',C2,'LineWidth',lw);
+grid minor;
+
+set(gca,'ticklabelinterpreter','latex',...
+    'fontsize',fontsizeTicks)
+xlabel('$\textrm{Time}[s]$','interpreter','latex','fontsize',fontsizeLabel)
+ylabel('$[m/s]$','interpreter','latex','fontsize',fontsizeLabel)
+title({'(c)'},'fontsize',fontsizeTitel,'interpreter','latex')
+% set(gca,'Xticklabel',[])
+legend({'$\mu_{nreal}$','$\mu_{lmodel}$'},'interpreter','latex','fontsize',fontsizeLegend)
+
+
+%
+figure('Position', [10 10 sizeX sizeY])
+set(gcf, 'PaperUnits', 'inches');
+set(gcf, 'PaperSize', [8.5 11]);
+set(gcf, 'PaperPositionMode', 'manual');
+
+subplot(2,2,1)
+%plot(t(1:length(F_ref)),F_ref,'-.','Color',C9,'LineWidth',lw*1.2); hold on
+%plot(uv(1,:),uv(2,:),'-','Color',C11,'LineWidth',lw);
+plot(t,nu(4,1:length(t)),'-','Color',C11,'LineWidth',lw); hold on;
+plot(t,nu_estimate(4,1:end-1),'--','Color',C12,'LineWidth',lw);
+grid minor;
+grid minor;
+set(gca,'ticklabelinterpreter','latex',...
+    'fontsize',fontsizeTicks)
+%xlabel('$\textrm{Time}[s]$','interpreter','latex','fontsize',fontsizeLabel)
+ylabel('$[m/s]$','interpreter','latex','fontsize',fontsizeLabel)
+title({'(a)'},'fontsize',fontsizeTitel,'interpreter','latex')
+% set(gca,'Xticklabel',[])
+legend({'$p_{real}$','$p_{model}$'},'interpreter','latex','fontsize',fontsizeLegend)
+%plot(t,ul,'-','Color',C2,'LineWidth',lw);
+grid minor;
+
+
+%
+subplot(2,2,2)
+%plot(t(1:length(phi_ref)),phi_ref,'-.','Color',C9,'LineWidth',lw*1.2); hold on
+plot(t,nu(5,1:length(t)),'-','Color',C13,'LineWidth',lw); hold on;
+plot(t,nu_estimate(5,1:length(t)),'--','Color',C14,'LineWidth',lw);
+grid minor;
+
+set(gca,'ticklabelinterpreter','latex',...
+    'fontsize',fontsizeTicks)
+%xlabel('$\textrm{Time}[s]$','interpreter','latex','fontsize',fontsizeLabel)
+ylabel('$[m/s]$','interpreter','latex','fontsize',fontsizeLabel)
+title({'(b)'},'fontsize',fontsizeTitel,'interpreter','latex')
+% set(gca,'Xticklabel',[])
+legend({'$q_{ref}$','$q_{m}$'},'interpreter','latex','fontsize',fontsizeLegend)
+
+%
+subplot(2,2,3)
+%plot(t(1:length(theta_ref)),theta_ref,'-.','Color',C9,'LineWidth',lw*1.2); hold on
+plot(t,nu(6,1:length(t)),'-','Color',C2,'LineWidth',lw); hold on;
+plot(t,nu_estimate(6,1:length(t)),'--','Color',C15,'LineWidth',lw);
+%plot(t,ul,'-','Color',C2,'LineWidth',lw);
+grid minor;
+
+set(gca,'ticklabelinterpreter','latex',...
+    'fontsize',fontsizeTicks)
+xlabel('$\textrm{Time}[s]$','interpreter','latex','fontsize',fontsizeLabel)
+ylabel('$[m/s]$','interpreter','latex','fontsize',fontsizeLabel)
+title({'(c)'},'fontsize',fontsizeTitel,'interpreter','latex')
+% set(gca,'Xticklabel',[])
+legend({'$r_{ref}$','$r_{m}$'},'interpreter','latex','fontsize',fontsizeLegend)

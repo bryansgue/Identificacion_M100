@@ -1,0 +1,109 @@
+function [xp] = system_dynamics_quat(x, uref, u, u_p, chi)
+%UNTITLED2 Summary of this function goes here
+%% State of the system
+h = x(1:3);
+v = x(4:6);
+quat = x(7:10);
+omega = x(11:13);
+
+
+%   Detailed explanation goes here
+
+ul_ref = uref(1);
+um_ref = uref(2);
+un_ref = uref(3);
+w_ref = uref(4);
+
+ul = u(1);
+um = u(2);
+un = u(3);
+
+ul_p = u_p(1);
+um_p = u_p(2);
+un_p = u_p(3);
+
+wz = omega(3);
+wz_p = 0;
+
+
+%% System parameters
+g = 9.8;
+m = chi(1);
+Jxx = chi(2);
+Jyy = chi(3);
+Jzz = chi(4);
+
+%% Inertia Mmatrix
+I = [Jxx, 0 0;...
+     0, Jyy, 0;...
+     0, 0, Jzz];
+ 
+%% Torques inputs
+
+e = [0;0;1];
+
+
+%% Rotational matrix
+[R] = quaternionToRotationMatrix(quat);
+
+%% Force body frame Drone
+u_T =     chi(5) * un_ref- chi(6) * un - chi(7) * un_p;
+u_theta = chi(8) * ul_ref- chi(9) * ul - chi(10)* ul_p;
+u_phi =   chi(11)* um_ref- chi(12)* um - chi(13)* um_p;
+u_psi =  chi(14)* w_ref - chi(15)* wz - chi(16)* wz_p;
+
+Kp_ref = [chi(5) 0 0;
+          0 chi(5) 0;
+          0 0 chi(5)];
+
+Kp_v = [chi(6) 0 0;
+        0 chi(6) 0;
+        0 0 chi(6)];
+
+Kd_vp = [chi(7) 0 0;
+        0 chi(7) 0;
+        0 0 chi(7)];
+
+E = [0 0 0;
+     0 0 0;
+     0 0 1];
+
+A = [chi(8) 0 0;
+     0 chi(11) 0;
+     0 0 chi(14)];
+B = [chi(9) 0 0;
+     0 chi(12) 0;
+     0 0 0];
+C = [0 0 0;
+     0 0 0;
+     0 0 chi(15)];
+D = [chi(19) 0 0;
+     0 chi(13) 0;
+     0 0 0];
+D = [0 0 0;
+     0 0 0;
+     0 0 chi(16)];
+
+m
+ 
+ux=0;
+uy=0;
+T = [ux; uy; u_T];
+Tau = [u_theta; u_phi; u_psi];
+
+%% Aceleration system 
+v_p = inv(eye(3)+ 1/m * E * Kd_vp)*[ -e*g + 1/m *E*R*Kp_ref -  1/m *E*Kp_v];
+
+q_dot = quat_p(quat, omega);
+
+omega_p = inv(I)*(Tau - cross(omega, I*omega));
+
+
+%% General vector of the system
+xp = zeros(13, 1);
+xp(1:3) = v;
+xp(4:6) = v_p;
+xp(7:10) = q_dot;
+xp(11:13) = omega_p;
+end
+
