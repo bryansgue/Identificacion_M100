@@ -88,9 +88,21 @@ vx = double(vel(1,init:dim));
 vy = double(vel(2,init:dim));
 vz = double(vel(3,init:dim));
 
-v =  [vx;vy; vz];
+v =  [vx; vy; vz];
 
 %% VELOCIDAD BODY
+
+% for k=1:length(eul)
+%      R = Rot_z(eul(:,k));
+%      u(:,k) = pinv(R)*v(:,k);
+% end 
+% 
+% ul = double(u(1,:));
+% um = double(u(2,:));
+% un = double(u(3,:));
+% % 
+% u =  [ul; um; un];
+
 ul = double(u(1,init:dim));
 um = double(u(2,init:dim));
 un = double(u(3,init:dim));
@@ -130,13 +142,14 @@ x = [ul; um; un; r];
 x_p = [ul_p; um_p; un_p; r_p];
 
 %% Filter signals
-landa = 25;
+landa = 10;
 F1=tf(landa,[1 landa]);
 
 %% REFERENCE SIGNALS Filtradas
 u_ref_f(1,:) = lsim(F1,u_ref(1,:),t);
 u_ref_f(2,:) = lsim(F1,u_ref(2,:),t);
 u_ref_f(3,:) = lsim(F1,u_ref(3,:),t);
+u_ref_f(4,:) = lsim(F1,u_ref(4,:),t);
 
 
 
@@ -152,6 +165,14 @@ eul_f(1,:) = lsim(F1,eul(1,:),t);
 eul_f(2,:) = lsim(F1,eul(2,:),t);
 eul_f(3,:) = lsim(F1,eul(3,:),t);
 
+omega_f(1,:) = lsim(F1,omega(1,:),t);
+omega_f(2,:) = lsim(F1,omega(2,:),t);
+omega_f(3,:) = lsim(F1,omega(3,:),t);
+
+omega_p_f(1,:) = lsim(F1,omega_p(1,:),t);
+omega_p_f(2,:) = lsim(F1,omega_p(2,:),t);
+omega_p_f(3,:) = lsim(F1,omega_p(3,:),t);
+
 
 %% REAL SYSTEM_P Filter
 eul_p_f(1,:) = lsim(F1,eul_p(1,:),t);
@@ -161,6 +182,14 @@ eul_p_f(3,:) = lsim(F1,eul_p(3,:),t);
 v_f(1,:) = lsim(F1,v(1,:),t);
 v_f(2,:) = lsim(F1,v(2,:),t);
 v_f(3,:) = lsim(F1,v(3,:),t);
+
+u_f(1,:) = lsim(F1,u(1,:),t);
+u_f(2,:) = lsim(F1,u(2,:),t);
+u_f(3,:) = lsim(F1,u(3,:),t);
+
+u_p_f(1,:) = lsim(F1,u_p(1,:),t);
+u_p_f(2,:) = lsim(F1,u_p(2,:),t);
+u_p_f(3,:) = lsim(F1,u_p(3,:),t);
 
 v_p_f(1,:) = lsim(F1,v_p(1,:),t);
 v_p_f(2,:) = lsim(F1,v_p(2,:),t);
@@ -174,45 +203,45 @@ eul_pp_f(3,:) = lsim(F1,eul_pp(3,:),t);
 
 
 %% Parameter matrices
-alpha = 0.01;
+a = 0;
+b = 0;
+L = [0;0];
 %% Parametros del optimizador
-% options = optimset('Display','iter',...
-%     'TolFun', 1e-8,...
-%     'MaxIter', 60000,...
-%     'MaxFunEvals', 10000,... % Agregado nuevo_valor aquí
-%     'Algorithm', 'active-set',...
-%     'FinDiffType', 'forward',...
-%     'RelLineSrchBnd', [],...
-%     'RelLineSrchBndDuration', 1,...
-%     'TolConSQP', 2e-8);
-% 
-% x0 = ones(1,4);
-% %x0 = [ones(1,3),chix, chiy,chiz];
-% f_obj1 = @(x) funcion_costo_full(x,u_ref_f,eul_f,v_f,v_p_f,N);                                  
-% chi = fmincon(f_obj1,x0,[],[],[],[],[],[],[],options);
- %%
+options = optimset('Display','iter',...
+    'TolFun', 1e-8,...
+    'MaxIter', 60000,...
+    'MaxFunEvals', 10000,... % Agregado nuevo_valor aquí
+    'Algorithm', 'active-set',...
+    'FinDiffType', 'forward',...
+    'RelLineSrchBnd', [],...
+    'RelLineSrchBndDuration', 1,...
+    'TolConSQP', 2e-8);
+
+x0 = ones(1,19);
+%x0 = [ones(1,3),chix, chiy,chiz];
+f_obj1 = @(x) funcion_costo(x, u_ref_f, u_p_f, u_f, omega_f,omega_p_f, N, L); 
+                            
+chi = fmincon(f_obj1,x0,[],[],[],[],[],[],[],options);
+ %
  
  
  
 
 
-%%
-% chi =  1.0e+03 * [ -0.0937   -0.2444   -0.0654    3.4581   -3.4911   -0.7514    0.6218    0.1065    0.4892    0.2573    1.9080   -2.0800   -0.3292    0.3187   -0.2839 0.0687    0.2530    0.3755   -0.2393   -0.0171   -0.0349    0.0105    0.2049    0.0013]';
-% chi = [ 0.0002    2.2455    2.1997    1.0160]
-% x_estimate(:, 1) = [h(:,1);v(:,1)];
-% 
-% for k=1:length(t)-1
-%       
-%     x_estimate(:, k+1) =  RK4_euler_vel(x_estimate(:, k), u_ref_f(:, k), chi, ts, eul_f(:,k));
-%     
-% end
+%% SIMULATION DYNAMICS
+x_estimate(:,1) = x(:,1);
+for k=1:length(t)
+    x_estimate(:, k+1) = dynamic_model_for_sim(chi, x_estimate(:,k), u_ref(:,k), L, ts);
+end
 
 %%
 % Primer subplot: x_estimate y phi_p
 subplot(4,1,1)
-plot(u_ref(1,:), 'LineWidth', 2, 'DisplayName', 'hx_{estimate}');
+plot(x(1,:), 'LineWidth', 2, 'DisplayName', 'ul_{real}');
 hold on
-plot(x(1,:), 'LineWidth', 2, 'DisplayName', 'hx_{real}');
+plot(x_estimate(1,:), 'LineWidth', 2, 'DisplayName', 'ul_{estimate}');
+hold on
+plot(u_ref(1,:) ,'Color', [0.5 0.5 0.5], 'LineStyle', '--', 'LineWidth', 1, 'DisplayName', 'ul_{ref}');
 ylabel('Valores');
 title('Comparación de phi\_estimate y phi\_p');
 legend;
@@ -220,9 +249,11 @@ grid on
 
 % Segundo subplot: x_estimate y theta_p
 subplot(4,1,2)
-plot(u_ref(2,:), 'LineWidth', 2, 'DisplayName', 'hy_{estimate}');
+plot(x(2,:), 'LineWidth', 2, 'DisplayName', 'um_{real}');
 hold on
-plot(x(2,:), 'LineWidth', 2, 'DisplayName', 'hy_{real}');
+plot(x_estimate(2,:), 'LineWidth', 2, 'DisplayName', 'um_{estimate}');
+hold on
+plot(u_ref(2,:),'Color', [0.5 0.5 0.5], 'LineStyle', '--', 'LineWidth', 1, 'DisplayName', 'um_{ref}');
 ylabel('Valores');
 title('Comparación de theta\_estimate y theta\_p');
 legend;
@@ -230,9 +261,13 @@ grid on
 
 % Tercer subplot: x_estimate y psi_p
 subplot(4,1,3)
-plot(u_ref(3,:), 'LineWidth', 2, 'DisplayName', 'hz_{estimate}');
+
+
+plot(x(3,:), 'LineWidth', 2, 'DisplayName', 'ul_{real}');
 hold on
-plot(x(3,:), 'LineWidth', 2, 'DisplayName', 'hz_{real}');
+plot(x_estimate(3,:), 'LineWidth', 2, 'DisplayName', 'ul_{estimate}');
+hold on
+plot(u_ref(3,:),'Color', [0.5 0.5 0.5], 'LineStyle', '--', 'LineWidth', 1, 'DisplayName', 'ul_{ref}');
 xlabel('Tiempo');
 ylabel('Valores');
 title('Comparación de psi\_estimate y psi\_p');
@@ -241,9 +276,12 @@ grid on
 
 % Tercer subplot: x_estimate y psi_p
 subplot(4,1,4)
-plot(u_ref(4,:), 'LineWidth', 2, 'DisplayName', 'hz_{estimate}');
+plot(x(4,:), 'LineWidth', 2, 'DisplayName', 'r_{real}');
 hold on
-plot(x(4,:), 'LineWidth', 2, 'DisplayName', 'hz_{real}');
+plot(x_estimate(4,:), 'LineWidth', 2, 'DisplayName', 'r_{estimate}');
+hold on
+plot(u_ref(4,:),'Color', [0.5 0.5 0.5], 'LineStyle', '--', 'LineWidth', 1, 'DisplayName', 'r_{ref}');
+
 xlabel('Tiempo');
 ylabel('Valores');
 title('Comparación de psi\_estimate y psi\_p');
