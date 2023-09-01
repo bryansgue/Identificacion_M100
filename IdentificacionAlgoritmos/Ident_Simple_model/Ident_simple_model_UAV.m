@@ -5,7 +5,7 @@
 clc, clear all, close all;
 
 %% LOAD VALUES FROM MATRICES
-n=3;
+n=4;
 n_chr = int2str(n);
 text1 = 'states_';
 text2 = 'u_ref_';
@@ -28,13 +28,13 @@ vel = states(7:9,:);
 euler_p = states(10:12,:);
 omega = states(13:15,:);
 quat = states(16:19,:);
-u = states(20:22,:);
+% u = states(20:22,:);
 
 %% Settings
 clear tf;
 
 final = 0;
-init = 1;
+init = 6;
 t = t(1,1:end-final);
 
 dim = length(t);
@@ -42,7 +42,7 @@ dim = length(t);
 t = t(1,init:end);
 N = length(t);
 
-ts = 0.03;
+ts = 1/30;
 
 %% REFERENCE SIGNALS 
 
@@ -92,20 +92,20 @@ v =  [vx; vy; vz];
 
 %% VELOCIDAD BODY
 
-% for k=1:length(eul)
-%      R = Rot_z(eul(:,k));
-%      u(:,k) = pinv(R)*v(:,k);
-% end 
-% 
-% ul = double(u(1,:));
-% um = double(u(2,:));
-% un = double(u(3,:));
-% % 
-% u =  [ul; um; un];
+for k=1:length(eul)
+     R = Rot_z(eul(:,k));
+     u(:,k) = pinv(R)*v(:,k);
+end 
 
-ul = double(u(1,init:dim));
-um = double(u(2,init:dim));
-un = double(u(3,init:dim));
+ul = double(u(1,:));
+um = double(u(2,:));
+un = double(u(3,:));
+ 
+
+
+% ul = double(u(1,init:dim));
+% um = double(u(2,init:dim));
+% un = double(u(3,init:dim));
 
 u =  [ul; um; un];
 
@@ -225,7 +225,7 @@ chi = fmincon(f_obj1,x0,[],[],[],[],[],[],[],options);
  %
  
  
- 
+save("chi_simple.mat","chi")
 
 
 %% SIMULATION DYNAMICS

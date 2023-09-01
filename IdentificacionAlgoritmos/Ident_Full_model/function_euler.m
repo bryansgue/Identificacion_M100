@@ -18,31 +18,6 @@ c_3 = theta_p*psi_p;
 sigma = [c_1;c_2;c_3];
 
 
-% chiI = [0.9289    2.5456    1.5625];
-% 
-% Mbar = M_matrix(chiI,euler);
-% Cbar = C_matrix(chiI,euler,euler_p);
-% 
-% 
-% chiy =[   -8.7137   10.0991    1.4996   -1.7877    2.2270   -0.3464   -1.3446];
-% chiz = [ 19.8078  -12.8072    1.4176   -3.8751    0.2143    5.6843];
-% 
-% A = [chi(1) 0 0;
-%      0 chiy(1) 0;
-%      0 0 chiz(1)];
-% B = [chi(2) 0 0;
-%      0 chiy(2) 0;
-%      0 0 0];
-% C = [chi(3) 0 0;
-%      0 chiy(3) 0;
-%      0 0 chiz(2)];
-% D = [chi(4) chi(5) chi(6);
-%      chiy(4) chiy(5) chiy(6);
-%      chiz(3) chiz(4) chiz(5)];
-% E = [chi(7) 0 0;
-%      0 chiy(7) 0;
-%      0 0 chiz(6)];
-
 
 Mbar = M_matrix(chi,euler);
 Cbar = C_matrix(chi,euler,euler_p);

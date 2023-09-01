@@ -7,7 +7,7 @@ t = 0:ts:tfin;
 
 %% Inicializa Nodo ROS
 rosshutdown
-setenv('ROS_MASTER_URI','http://192.168.88.223:11311')
+setenv('ROS_MASTER_URI','http://192.168.88.86:11311')
 setenv('ROS_IP','192.168.88.104')
 rosinit
 
@@ -31,7 +31,7 @@ odomSub = rossubscriber('/dji_sdk/odometry');
 
 euler_p(:,1) = [0;0;0]; 
 
-n=3; % Seleccion UAV
+n=4; % Seleccion UAV
 n_chr = int2str(n);
 
 
@@ -54,7 +54,7 @@ for k=1:length(t)
     
     euler_p(:,k+1) = Euler_p(omega(:,k+1),euler(:,k+1));
       
-    R(:,:,k) = quatToRot(quat(:,k+1));
+    R(:,:,k) = QuatToRot(quat(:,k+1));
 
     u(:,k+1) = inv(R(:,:,k))*v(:,k+1);
                      
