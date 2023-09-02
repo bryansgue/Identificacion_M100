@@ -1,0 +1,36 @@
+function [x_p] = function_model(x, u_ref, chi, euler)
+%UNTITLED2 Summary of this function goes here
+%   Detailed explanation goes here
+x1 = x(1:6);
+x2 = x(7:12);
+
+h = x1;
+v = x2;
+
+g = 9.81;
+m = chi(1);
+
+I = eye(3);
+A = [0 0 0;
+    0 0 0
+    0 0 chi(2)];
+B = [0 0 0;
+    0 0 0
+    0 0 chi(3)];
+Q = [0 0 0;
+    0 0 0
+    0 0 chi(4)];
+
+G = 1*[0;0;m*g];
+Gbar = 1*[0;0;m*g];
+
+R = Rot_zyx(euler);
+
+x1_p = x2;
+
+x2_p = pinv(m*I+R*Q)*(R*(A*u_ref-B*v+G)-Gbar);
+
+x_p = [x1_p; x2_p];
+
+end
+
