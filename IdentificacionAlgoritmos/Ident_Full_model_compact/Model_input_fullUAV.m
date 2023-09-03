@@ -12,6 +12,6 @@ m = X(1);
  
  G = [0;0;m*g;0;0;0];
 
-u_real = S*u_ref-Q*q-E*q_p-T*q_pp+G;
+u_real = S*u_ref -Q*q -E*q_p -T*q_pp+G;
 
 end

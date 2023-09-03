@@ -21,12 +21,25 @@ E = E_fuction(chi);
 T = T_fuction(chi);
 
 R_bar = [R zeros(3,3);
-        zeros(3,3) eye(3,3)];
+        zeros(3,3) zeros(3,3)];
 
+% R_T = [R*T(1:3,1:3) T(1:3,4:6);T(4:6,1:3) T(4:6,4:6)];
+% Aux = (S*u-Q*q-E*q_p+B);
+% Aux1 = R*Aux(1:3,1);
+% Aux2 = Aux(4:6,1);
+% Input_model = [Aux1;Aux2];
+% q_pp = inv(Mbar+R_T)*(Input_model-Cbar*q_p-Gbar);
 
+R_T = [R*T(1:3,1:3) T(1:3,4:6);T(4:6,1:3) T(4:6,4:6)];
 Aux = (S*u-Q*q-E*q_p+B);
+Aux1 = R*Aux(1:3,1);
+Aux2 = Aux(4:6,1);
+Input_model = [Aux1;Aux2];
+q_pp = inv(Mbar+R_T)*(Input_model-Cbar*q_p-Gbar);
 
-q_pp = pinv(Mbar+R_bar*T)*(R_bar*Aux-Cbar*q_p-Gbar);
+
+
+
 
 xp = [q_p; q_pp];
 

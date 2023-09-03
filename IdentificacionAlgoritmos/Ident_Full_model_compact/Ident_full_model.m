@@ -199,7 +199,7 @@ q_pp_f(6,:) = lsim(F1,q_pp(6,:),t);
 
 
 %%
-% OPTIMIZATION PARAMETERS IDENTIFICATION
+%sOPTIMIZATION PARAMETERS IDENTIFICATION
 options = optimoptions(@fmincon,'Algorithm','interior-point'); 
 options.MaxFunctionEvaluations = 60000;   
 rng default;
@@ -216,13 +216,38 @@ problem = createOptimProblem('fmincon','objective',...
 [x, f] = run(gs, problem);
 values_final = x;
 
+%% Optimizador
+
+% options = optimset('Display','iter',...
+%     'TolFun', 1e-8,...
+%     'MaxIter', 60000,...
+%     'MaxFunEvals', 10000,...
+%     'Algorithm', 'active-set',...
+%     'FinDiffType', 'forward',...
+%     'RelLineSrchBnd', [],...
+%     'RelLineSrchBndDuration', 1,...
+%     'TolConSQP', 2e-8);
+% 
+% % Número de puntos iniciales aleatorios que deseas generar
+% num_starts = 10;
+% 
+% % Inicializa un arreglo para almacenar los resultados de cada optimización
+% results = cell(num_starts, 1);
+% 
+% for i = 1:num_starts
+%     x0 = ones(1,16) .* rand(1,16);
+%     lb = zeros(1,16);
+%     f_obj1 = @(x) funcion_costo_fullUAV(x, input, q_f, q_p_f, q_pp_f, N);                                 
+%     results{i} = fmincon(f_obj1, x0, [], [], [], [], lb, [], [], options);
+% end
+% 
+% % Encuentra la mejor solución y su costo utilizando min
+% [best_cost, best_idx] = min(cellfun(@(x) f_obj1(x), results));
+% values_final= results{best_idx};
+% 
+% % La mejor solución se encuentra en best_result y su costo en best_cost
 
 %% ACCIONES DE CONTROL TEST 
-% F_ref =     0.0*ones(1, length(t));
-% phi_ref =   0*ones(1, length(t));
-% theta_ref = 0*ones(1, length(t));
-% psi_ref =   0*ones(1, length(t));
-% u_ref = [0*F_ref;0*F_ref;F_ref; phi_ref; theta_ref; psi_ref];
 
 % SIMULATION DYNAMICS
 q_estimate(:,1) = [q(:,1); q_p(:,1)];

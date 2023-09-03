@@ -207,24 +207,53 @@ a = 0;
 b = 0;
 L = [0;0];
 %% Parametros del optimizador
+% options = optimset('Display','iter',...
+%     'TolFun', 1e-8,...
+%     'MaxIter', 60000,...
+%     'MaxFunEvals', 10000,... % Agregado nuevo_valor aquí
+%     'Algorithm', 'active-set',...
+%     'FinDiffType', 'forward',...
+%     'RelLineSrchBnd', [],...
+%     'RelLineSrchBndDuration', 1,...
+%     'TolConSQP', 2e-8);
+% 
+% x0 = ones(1,19);
+% %x0 = [ones(1,3),chix, chiy,chiz];
+% f_obj1 = @(x) funcion_costo(x, u_ref_f, u_p_f, u_f, omega_f,omega_p_f, N, L); 
+%                             
+% chi = fmincon(f_obj1,x0,[],[],[],[],[],[],[],options);
+%  %
+ 
+%%
+
 options = optimset('Display','iter',...
     'TolFun', 1e-8,...
     'MaxIter', 60000,...
-    'MaxFunEvals', 10000,... % Agregado nuevo_valor aquí
+    'MaxFunEvals', 10000,...
     'Algorithm', 'active-set',...
     'FinDiffType', 'forward',...
     'RelLineSrchBnd', [],...
     'RelLineSrchBndDuration', 1,...
     'TolConSQP', 2e-8);
 
-x0 = ones(1,19);
-%x0 = [ones(1,3),chix, chiy,chiz];
-f_obj1 = @(x) funcion_costo(x, u_ref_f, u_p_f, u_f, omega_f,omega_p_f, N, L); 
-                            
-chi = fmincon(f_obj1,x0,[],[],[],[],[],[],[],options);
- %
- 
- 
+% Número de puntos iniciales aleatorios que deseas generar
+num_starts = 10;
+
+% Inicializa un arreglo para almacenar los resultados de cada optimización
+results = cell(num_starts, 1);
+
+for i = 1:num_starts
+    x0 = ones(1,19) .* rand(1,19);
+    lb = zeros(1,16);
+    f_obj1 = @(x) funcion_costo(x, u_ref_f, u_p_f, u_f, omega_f,omega_p_f, N, L);                                 
+    results{i} = fmincon(f_obj1, x0, [], [], [], [], lb, [], [], options);
+end
+
+% Encuentra la mejor solución y su costo utilizando min
+[best_cost, best_idx] = min(cellfun(@(x) f_obj1(x), results));
+chi = results{best_idx};
+
+%%
 save("chi_simple.mat","chi")
 
 
