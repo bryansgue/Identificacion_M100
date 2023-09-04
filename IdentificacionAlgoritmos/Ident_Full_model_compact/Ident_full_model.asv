@@ -136,7 +136,7 @@ T_ref_f(2,:) = lsim(F1,T_ref(2,:),t);
 T_ref_f(3,:) = lsim(F1,T_ref(3,:),t);
 
 
-input = [u_ref_f;T_ref_f];
+input = [u_ref;T_ref];
 
 %% REAL SYSTEM Filter
 h_f(1,:) = lsim(F1,h(1,:),t);
@@ -246,18 +246,15 @@ values_final = x;
 
 % La mejor solución se encuentra en best_result y su costo en best_cost
 %%
-
 save("chi_uav_model.mat", "values_final");
-save("/home/bryansgue/Doctoral_Research/Python/Servo_MPC_UAV_Acados/chi_uav_model.mat", "values_final");
-
 %%
 %% ACCIONES DE CONTROL TEST 
 
 % SIMULATION DYNAMICS
-q_estimate(:,1) = [q(:,1); q_p(:,1)];   
+q_estimate(:,1) = [q(:,1); q_p(:,1)];
 for k=1:length(t)
     q_estimate(:, k+1) =  f_dynamic(q_estimate(:, k), input(:, k), values_final, ts);
-    q_estimate(6, k+1) = Angulo(q_estimate(6, k+1)); 
+    q_estimate(6, k+1)
     
 end
 
