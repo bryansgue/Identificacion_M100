@@ -4,7 +4,7 @@
 clc, clear all, close all;
 
 %% LOAD VALUES FROM MATRICES
-load('Test3.mat')
+load('Test2.mat')
 
 clear tf;
 desface = 20;

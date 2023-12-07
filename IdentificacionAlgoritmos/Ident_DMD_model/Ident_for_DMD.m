@@ -1,11 +1,10 @@
-
 %% IDENTIFICATION OF PARAMETERS DORNE DYNAMIC %%
 
 %% clear variables
 clc, clear all, close all;
 
 %% LOAD VALUES FROM MATRICES
-n=3;
+n=5;
 n_chr = int2str(n);
 text1 = 'states_';
 text2 = 'u_ref_';
@@ -142,7 +141,7 @@ x = [ul; um; un; r];
 x_p = [ul_p; um_p; un_p; r_p];
 
 %% Filter signals
-landa = 25;
+landa = 20;
 F1=tf(landa,[1 landa]);
 
 %% REFERENCE SIGNALS Filtradas
@@ -198,74 +197,48 @@ eul_pp_f(1,:) = lsim(F1,eul_pp(1,:),t);
 eul_pp_f(2,:) = lsim(F1,eul_pp(2,:),t);
 eul_pp_f(3,:) = lsim(F1,eul_pp(3,:),t);
 
+%% CALCULO DEL MODELO
+u_real_f = [u_f;omega_f(3,:)];
+u_p_real = [u_p_f;omega_p_f(3,:)];
 
-%% Parameter matrices
-a = 0;
-b = 0;
-L = [0;0];
-%% Parametros del optimizador
-% options = optimset('Display','iter',...
-%     'TolFun', 1e-8,...
-%     'MaxIter', 60000,...
-%     'MaxFunEvals', 10000,... % Agregado nuevo_valor aquí
-%     'Algorithm', 'active-set',...
-%     'FinDiffType', 'forward',...
-%     'RelLineSrchBnd', [],...
-%     'RelLineSrchBndDuration', 1,...
-%     'TolConSQP', 2e-8);
-% 
-% x0 = ones(1,19);
-% %x0 = [ones(1,3),chix, chiy,chiz];
-% f_obj1 = @(x) funcion_costo(x, u_ref_f, u_p_f, u_f, omega_f,omega_p_f, N, L); 
-%                             
-% chi = fmincon(f_obj1,x0,[],[],[],[],[],[],[],options);
-%  %
- 
+
+tic 
+Gamma = u_ref_f;
+Omega = [u_real_f(:,1:end-1); 
+         u_ref_f(:,1:end-1)];
+[U,S,V] = svd(Omega,'econ') ;
+
+G = u_p_real(:,2:end)*V*S^(-1)*U';
+U1=U(1:4,1:8);
+U2=U(5:8,1:8);
+
+A = G(:,1:4);
+B = G(:,4+1:end);
+A = u_p_real(:,2:end)*V*S^(-1)*U1';
+B = u_p_real(:,2:end)*V*S^(-1)*U2';
+
+% A = U'* vp_real(:,2:end)*V*S^(-1)*U1'*U
+% B = U* vp_real(:,2:end)'*V'*S^(-1)*U2'*U
 %%
-
-options = optimset('Display','iter',...
-    'TolFun', 1e-8,...
-    'MaxIter', 60000,...
-    'MaxFunEvals', 10000,...
-    'Algorithm', 'active-set',...
-    'FinDiffType', 'forward',...
-    'RelLineSrchBnd', [],...
-    'RelLineSrchBndDuration', 1,...
-    'TolConSQP', 2e-8);
-
-% Número de puntos iniciales aleatorios que deseas generar
-num_starts = 10;
-
-% Inicializa un arreglo para almacenar los resultados de cada optimización
-results = cell(num_starts, 1);
-
-for i = 1:num_starts
-    x0 = ones(1,19) .* rand(1,19);
-    lb = zeros(1,16);
-    f_obj1 = @(x) funcion_costo(x, u_ref_f, u_p_f, u_f, omega_f,omega_p_f, N, L);                                 
-    results{i} = fmincon(f_obj1, x0, [], [], [], [], lb, [], [], options);
-end
-
-% Encuentra la mejor solución y su costo utilizando min
-[best_cost, best_idx] = min(cellfun(@(x) f_obj1(x), results));
-chi = results{best_idx};
-
-%%
-save("chi_simple.mat","chi")
-
+% [A,B] = Ident(v_real,v_ref,vp_real,ts);
+toc
 
 %% SIMULATION DYNAMICS
-x_estimate(:,1) = [ul(1); um(1); un(1); r(1)];
+u_estimate = u_real_f(:,1);
 for k=1:length(t)
-    x_estimate(:, k+1) = dynamic_model_for_sim(chi, x_estimate(:,k), u_ref(:,k), L, ts);
+    a = (A*u_estimate(:,k)+B*u_ref_f(:,k));
+    u_estimate(:, k+1) = u_estimate(:, k) + a*ts;
+%     v_estimate(:, k+1) = sysmodel_DMDc.A*v_estimate(:,k)+sysmodel_DMDc.B*vref(:,k);
 end
 
+%save("IdentDMD_test.mat","v_estimate","v_ref","v_real","t");
+save("A_B_values_simulado.mat","A","B");
 %%
 % Primer subplot: x_estimate y phi_p
 subplot(4,1,1)
 plot(x(1,:), 'LineWidth', 2, 'DisplayName', 'ul_{real}');
 hold on
-plot(x_estimate(1,:), 'LineWidth', 2, 'DisplayName', 'ul_{estimate}');
+plot(u_estimate(1,:), 'LineWidth', 2, 'DisplayName', 'ul_{estimate}');
 hold on
 plot(u_ref(1,:) ,'Color', [0.5 0.5 0.5], 'LineStyle', '--', 'LineWidth', 1, 'DisplayName', 'ul_{ref}');
 ylabel('Valores');
@@ -277,7 +250,7 @@ grid on
 subplot(4,1,2)
 plot(x(2,:), 'LineWidth', 2, 'DisplayName', 'um_{real}');
 hold on
-plot(x_estimate(2,:), 'LineWidth', 2, 'DisplayName', 'um_{estimate}');
+plot(u_estimate(2,:), 'LineWidth', 2, 'DisplayName', 'um_{estimate}');
 hold on
 plot(u_ref(2,:),'Color', [0.5 0.5 0.5], 'LineStyle', '--', 'LineWidth', 1, 'DisplayName', 'um_{ref}');
 ylabel('Valores');
@@ -291,7 +264,7 @@ subplot(4,1,3)
 
 plot(x(3,:), 'LineWidth', 2, 'DisplayName', 'ul_{real}');
 hold on
-plot(x_estimate(3,:), 'LineWidth', 2, 'DisplayName', 'ul_{estimate}');
+plot(u_estimate(3,:), 'LineWidth', 2, 'DisplayName', 'ul_{estimate}');
 hold on
 plot(u_ref(3,:),'Color', [0.5 0.5 0.5], 'LineStyle', '--', 'LineWidth', 1, 'DisplayName', 'ul_{ref}');
 xlabel('Tiempo');
@@ -304,7 +277,7 @@ grid on
 subplot(4,1,4)
 plot(x(4,:), 'LineWidth', 2, 'DisplayName', 'r_{real}');
 hold on
-plot(x_estimate(4,:), 'LineWidth', 2, 'DisplayName', 'r_{estimate}');
+plot(u_estimate(4,:), 'LineWidth', 2, 'DisplayName', 'r_{estimate}');
 hold on
 plot(u_ref(4,:),'Color', [0.5 0.5 0.5], 'LineStyle', '--', 'LineWidth', 1, 'DisplayName', 'r_{ref}');
 
@@ -313,5 +286,4 @@ ylabel('Valores');
 title('Comparación de psi\_estimate y psi\_p');
 legend;
 grid on
-
 

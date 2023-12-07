@@ -31,6 +31,7 @@ odomSub = rossubscriber('/dji_sdk/odometry');
 
 euler_p(:,1) = [0;0;0]; 
 
+%%
 n=4; % Seleccion UAV
 n_chr = int2str(n);
 

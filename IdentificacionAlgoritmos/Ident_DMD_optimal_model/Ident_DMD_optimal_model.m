@@ -5,7 +5,7 @@
 clc, clear all, close all;
 
 %% LOAD VALUES FROM MATRICES
-n=3;
+n=4;
 n_chr = int2str(n);
 text1 = 'states_';
 text2 = 'u_ref_';
@@ -203,6 +203,12 @@ eul_pp_f(3,:) = lsim(F1,eul_pp(3,:),t);
 a = 0;
 b = 0;
 L = [0;0];
+
+%
+%% CALCULO DEL MODELO
+u_f = [u_f;omega_f(3,:)];
+u_p_f = [u_p_f;omega_p_f(3,:)];
+
 %% Parametros del optimizador
 % options = optimset('Display','iter',...
 %     'TolFun', 1e-8,...
@@ -234,16 +240,17 @@ options = optimset('Display','iter',...
     'TolConSQP', 2e-8);
 
 % Número de puntos iniciales aleatorios que deseas generar
-num_starts = 10;
+num_starts = 1;
 
 % Inicializa un arreglo para almacenar los resultados de cada optimización
 results = cell(num_starts, 1);
 
 for i = 1:num_starts
-    x0 = ones(1,19) .* rand(1,19);
-    lb = zeros(1,16);
-    f_obj1 = @(x) funcion_costo(x, u_ref_f, u_p_f, u_f, omega_f,omega_p_f, N, L);                                 
-    results{i} = fmincon(f_obj1, x0, [], [], [], [], lb, [], [], options);
+    x0 = ones(1,32) .* rand(1,32);
+%     lb = zeros(1,16);
+                                   
+    f_obj1 = @(x) funcion_costo(x, u_ref_f, u_p_f, u_f, N);                                 
+    results{i} = fmincon(f_obj1, x0, [], [], [], [], [], [], [], options);
 end
 
 % Encuentra la mejor solución y su costo utilizando min
@@ -251,21 +258,68 @@ end
 chi = results{best_idx};
 
 %%
-save("chi_simple.mat","chi")
+A = [chi(1) chi(2) chi(3) chi(4);
+    chi(5) chi(6) chi(7) chi(8);
+    chi(9) chi(10) chi(11) chi(12);
+    chi(13) chi(14) chi(15) chi(16)]
+
+B = [chi(17) chi(18) chi(19) chi(20);
+    chi(21) chi(22) chi(23) chi(24);
+    chi(25) chi(26) chi(27) chi(28);
+    chi(29) chi(30) chi(31) chi(32)]
+
+% A = zeros(4,4);
+% A(1,1) = chi(1);
+% A(2,2) = chi(2);
+% A(3,3) = chi(3);
+% A(4,4) = chi(4);
+% 
+% B = zeros(4,4);
+% B(1,1) = chi(5);
+% B(2,2) = chi(6);
+% B(3,3) = chi(7);
+% B(4,4) = chi(8);
 
 
+%%
+
+
+% Determinar los valores mínimos y máximos de la matriz
+valor_minimo = min(A(:));
+valor_maximo = max(A(:));
+
+% Realizar una expansión de contraste
+matriz_expandida = (A - valor_minimo) / (valor_maximo - valor_minimo);
+
+% Crear una nueva figura con dimensiones personalizadas
+figure('Position', [100, 100, 800, 800]);
+
+% Mostrar la matriz expandida como una imagen con un tamaño personalizado
+imshow(matriz_expandida, 'InitialMagnification', 'fit');
+title('Matriz con contraste expandido');
+
+% Ajustar los ejes si es necesario
+axis on; % Muestra los ejes
+% Especificar una paleta de colores (en este caso, jet)
+%colormap(blue(256)); % Puedes cambiar 'jet' a otra paleta de colores si lo deseas
+colorbar; % Agrega una barra de colores para mostrar la escala de valores
+
+%%
 %% SIMULATION DYNAMICS
-x_estimate(:,1) = [ul(1); um(1); un(1); r(1)];
+u_estimate = u_f(:,1);
 for k=1:length(t)
-    x_estimate(:, k+1) = dynamic_model_for_sim(chi, x_estimate(:,k), u_ref(:,k), L, ts);
+    a = (A*u_estimate(:,k)+B*u_ref_f(:,k));
+    u_estimate(:, k+1) = u_estimate(:, k) + a*ts;
 end
 
+%save("IdentDMD_test.mat","v_estimate","v_ref","v_real","t");
+% save("A_B_values_simulado.mat","A","B");
 %%
 % Primer subplot: x_estimate y phi_p
 subplot(4,1,1)
 plot(x(1,:), 'LineWidth', 2, 'DisplayName', 'ul_{real}');
 hold on
-plot(x_estimate(1,:), 'LineWidth', 2, 'DisplayName', 'ul_{estimate}');
+plot(u_estimate(1,:), 'LineWidth', 2, 'DisplayName', 'ul_{estimate}');
 hold on
 plot(u_ref(1,:) ,'Color', [0.5 0.5 0.5], 'LineStyle', '--', 'LineWidth', 1, 'DisplayName', 'ul_{ref}');
 ylabel('Valores');
@@ -277,7 +331,7 @@ grid on
 subplot(4,1,2)
 plot(x(2,:), 'LineWidth', 2, 'DisplayName', 'um_{real}');
 hold on
-plot(x_estimate(2,:), 'LineWidth', 2, 'DisplayName', 'um_{estimate}');
+plot(u_estimate(2,:), 'LineWidth', 2, 'DisplayName', 'um_{estimate}');
 hold on
 plot(u_ref(2,:),'Color', [0.5 0.5 0.5], 'LineStyle', '--', 'LineWidth', 1, 'DisplayName', 'um_{ref}');
 ylabel('Valores');
@@ -291,7 +345,7 @@ subplot(4,1,3)
 
 plot(x(3,:), 'LineWidth', 2, 'DisplayName', 'ul_{real}');
 hold on
-plot(x_estimate(3,:), 'LineWidth', 2, 'DisplayName', 'ul_{estimate}');
+plot(u_estimate(3,:), 'LineWidth', 2, 'DisplayName', 'ul_{estimate}');
 hold on
 plot(u_ref(3,:),'Color', [0.5 0.5 0.5], 'LineStyle', '--', 'LineWidth', 1, 'DisplayName', 'ul_{ref}');
 xlabel('Tiempo');
@@ -304,7 +358,7 @@ grid on
 subplot(4,1,4)
 plot(x(4,:), 'LineWidth', 2, 'DisplayName', 'r_{real}');
 hold on
-plot(x_estimate(4,:), 'LineWidth', 2, 'DisplayName', 'r_{estimate}');
+plot(u_estimate(4,:), 'LineWidth', 2, 'DisplayName', 'r_{estimate}');
 hold on
 plot(u_ref(4,:),'Color', [0.5 0.5 0.5], 'LineStyle', '--', 'LineWidth', 1, 'DisplayName', 'r_{ref}');
 
@@ -313,5 +367,4 @@ ylabel('Valores');
 title('Comparación de psi\_estimate y psi\_p');
 legend;
 grid on
-
 
