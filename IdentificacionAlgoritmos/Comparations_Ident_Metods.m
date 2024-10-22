@@ -103,6 +103,9 @@ for k=1:length(t)
      
 end
 
+
+
+
 %Calcula CHI
 x1 = pinv(Y)*vef
 

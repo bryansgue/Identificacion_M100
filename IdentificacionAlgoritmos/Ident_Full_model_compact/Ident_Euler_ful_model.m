@@ -4,41 +4,34 @@
 clc, clear all, close all;
 
 %% LOAD VALUES FROM MATRICES
-n=7; %15
-n_chr = int2str(n);
-text1 = 'states_';
-text2 = 'T_ref_';
-text3 = 't_';
+n = 7;
+num = int2str(n);
+Archivo_1 = '/home/bryansgue/Doctoral_Research/Python/PySindy_fullcompact/Data_Ident_';
 extension = '.mat';
 
-load(strcat(text1,n_chr,extension))
-load(strcat(text2,n_chr,extension))
-load(strcat(text3,n_chr,extension))
+% Cargar los datos del archivo 1
+load(strcat(Archivo_1, num, extension));
+
 
 %%
-% load('states_1.mat')
-% load('T_ref_1.mat')
-% load('t_1.mat')
-
-%%
-pose = states(1:3,:);
-euler = states(4:6,:);
-vel = states(7:9,:);
-euler_p = states(10:12,:);
-omega = states(13:15,:);
-quat = states(16:19,:);
-u = states(20:22,:);
+pose = n;
+euler = euler;
+vel = v;
+euler_p = euler_p;
+omega = w;
+quat = q;
+u = nu;
 
 %% Settings
 clear tf;
 
 final = 0;
-init = 20;
-t = t(1,1:end-final);
+init = 1;
+t = time;
 
 dim = length(t);
 
-t = t(1,init:end);
+
 N = length(t);
 
 ts = 1/30
@@ -199,6 +192,7 @@ q_pp_f(6,:) = lsim(F1,q_pp(6,:),t);
 
 %%
 % sOPTIMIZATION PARAMETERS IDENTIFICATION
+%options = optimset('Display','iter', 'TolFun', 1e-8, 'MaxIter', 60000, 'MaxFunEvals', 10000, 'Algorithm', 'active-set', 'FinDiffType', 'forward','RelLineSrchBnd', [], 'RelLineSrchBndDuration', 1,'TolConSQP', 2e-8);
 options = optimoptions(@fmincon,'Algorithm','interior-point'); 
 options.MaxFunctionEvaluations = 60000;   
 rng default;
@@ -206,9 +200,10 @@ ms = MultiStart('FunctionTolerance',2e-4,'UseParallel',true,'Display','iter');
 gs = GlobalSearch(ms);
 
 % INITIAL VALUES
-% values= load("Xini.mat"); 
 chi = ones(16,1);  
-f_obj1 = @(x)  funcion_costo_fullUAV(x, input, q_f, q_p_f, q_pp_f, N);
+%load('chi_uav_compact_full_model.mat');
+%chi = values_final;
+f_obj1 = @(x)  funcion_costo_fullUAV(x, input, q_f, q_p_f, q_pp_f, N) ;
 % problem = fmincon(f_obj1,chi,[],[],[],[],[],[],[],options);
 problem = createOptimProblem('fmincon','objective',...
     f_obj1,'x0',chi,'lb',[zeros(16,1)],'ub',[],'options',options);
@@ -216,37 +211,7 @@ problem = createOptimProblem('fmincon','objective',...
 values_final = x;
 
 %% Optimizador
-
-% options = optimset('Display','iter',...
-%     'TolFun', 1e-8,...
-%     'MaxIter', 60000,...
-%     'MaxFunEvals', 10000,...
-%     'Algorithm', 'active-set',...
-%     'FinDiffType', 'forward',...
-%     'RelLineSrchBnd', [],...
-%     'RelLineSrchBndDuration', 1,...
-%     'TolConSQP', 2e-8);
-% 
-% % Número de puntos iniciales aleatorios que deseas generar
-% num_starts = 10;
-% 
-% % Inicializa un arreglo para almacenar los resultados de cada optimización
-% results = cell(num_starts, 1);
-% 
-% for i = 1:num_starts
-%     x0 = ones(1,16) .* rand(1,16);
-%     lb = zeros(1,16);
-%     f_obj1 = @(x) funcion_costo_fullUAV(x, input, q_f, q_p_f, q_pp_f, N);                                 
-%     results{i} = fmincon(f_obj1, x0, [], [], [], [], lb, [], [], options);
-% end
-% 
-% % Encuentra la mejor solución y su costo utilizando min
-% [best_cost, best_idx] = min(cellfun(@(x) f_obj1(x), results));
-% values_final= results{best_idx};
-
-% La mejor solución se encuentra en best_result y su costo en best_cost
-%%
-
+ 
 save("chi_uav_compact_full_model.mat", "values_final");
 %save("/home/bryansgue/Doctoral_Research/Python/Servo_MPC_UAV_Acados/chi_uav_model.mat", "values_final");
 
